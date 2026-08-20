@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lift Log">
+<meta name="theme-color" content="#0f1117">
+<meta name="mobile-web-app-capable" content="yes">
+<title>HLOWC — Harvey's Lake Olympic Weightlifting Club</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="hlowc-logo.png">
+<style>
+  :root {
+    --bg: #0f1117;
+    --card: #1a1d27;
+    --border: #2a2f3a;
+    --text: #e8eaed;
+    --muted: #9aa0a6;
+    --accent: #4ade80;
+    --accent2: #60a5fa;
+    --danger: #f87171;
+    --success: #4ade80;
+    --safe-top: env(safe-area-inset-top);
+    --safe-bottom: env(safe-area-inset-bottom);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.45;
+    padding: 12px;
+    padding-top: calc(12px + var(--safe-top));
+    padding-bottom: calc(20px + var(--safe-bottom));
+    max-width: 640px;
+    margin: 0 auto;
+    overscroll-behavior: none;
+  }
+  h1 { font-size: 1.5rem; margin-bottom: 2px; font-weight: 700; }
+  .subtitle { color: var(--muted); font-size: 0.85rem; margin-bottom: 16px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+  label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 4px; font-weight: 500; }
+  input, select, textarea {
+    width: 100%;
+    padding: 12px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 16px; /* prevents iOS zoom */
+    -webkit-appearance: none;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent2);
+  }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239aa0a6' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  .row { display: grid; gap: 10px; margin-bottom: 10px; }
+  .row-2 { grid-template-columns: 1fr 1fr; }
+  .row-3 { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 420px) {
+    .row-3 { grid-template-columns: 1fr 1fr; }
+  }
+  .attempt-block {
+    background: #141820;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+  .attempt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+  .attempt-fields {
+    display: grid;
+    grid-template-columns: 1fr 110px;
+    gap: 8px;
+  }
+  .note-field { grid-column: 1 / -1; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 44px;
+  }
+  .btn-primary { background: var(--accent); color: #0f1117; }
+  .btn-secondary { background: var(--border); color: var(--text); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-sm { padding: 8px 12px; font-size: 0.85rem; min-height: 36px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  .result-box {
+    background: #141820;
+    border-radius: 10px;
+    padding: 12px;
+    margin-top: 12px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .result-item span { display: block; font-size: 0.72rem; color: var(--muted); }
+  .result-item strong { font-size: 1.05rem; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  th, td {
+    padding: 8px 5px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th { color: var(--muted); font-weight: 600; }
+  .success { color: var(--success); }
+  .fail { color: var(--danger); }
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+  .badge-beginner { background: #334155; color: #94a3b8; }
+  .badge-novice { background: #1e3a5f; color: #60a5fa; }
+  .badge-amateur { background: #3b2f1a; color: #fbbf24; }
+  .badge-national { background: #3b1f1f; color: #f87171; }
+  .badge-elite { background: #1a3b2a; color: #4ade80; }
+  .empty { text-align: center; color: var(--muted); padding: 40px 20px; }
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    padding: 8px 0;
+    z-index: 10;
+  }
+  .tab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 8px;
+    border-radius: 10px;
+    background: var(--border);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .tab.active { background: var(--accent); color: #0f1117; }
+  .hidden { display: none !important; }
+  .section-title { font-size: 1.05rem; margin: 14px 0 8px; font-weight: 600; }
+  .video-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .video-thumb {
+    position: relative;
+    width: 100px;
+    height: 70px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+  }
+  .video-thumb video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .video-thumb .remove-vid {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .file-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--border);
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    min-height: 44px;
+  }
+  .file-btn input { display: none; }
+  .history-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+  .history-card .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .history-card .date { font-weight: 700; font-size: 1rem; }
+  .history-meta { font-size: 0.8rem; color: var(--muted); }
+  .lifts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin: 8px 0;
+    text-align: center;
+  }
+  .lifts-row div { background: #141820; border-radius: 8px; padding: 8px 4px; }
+  .lifts-row span { display: block; font-size: 0.7rem; color: var(--muted); }
+  .lifts-row strong { font-size: 1rem; }
+  .install-banner {
+    background: linear-gradient(135deg, #1e3a5f, #1a3b2a);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
+    font-size: 0.9rem;
+  }
+  .install-banner strong { display: block; margin-bottom: 6px; }
+  details summary { cursor: pointer; color: var(--accent2); font-size: 0.85rem; }
+</style>
+</head>
+<body>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><img src="hlowc-logo.png" alt="HLOWC" style="width:52px;height:52px;border-radius:12px;object-fit:cover"><div><h1>HLOWC</h1><p class="subtitle" style="margin-bottom:0">Harvey's Lake Olympic Weightlifting Club</p></div></div>
+
+  <div id="install-banner" class="install-banner hidden">
+    <strong>Add to Home Screen</strong>
+    Tap the Share button <span style="font-size:1.2em">⎋</span> then “Add to Home Screen”.  
+    It will open like a normal app and stay on your phone.
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="new">New</div>
+    <div class="tab" data-tab="history">History</div>
+    <div class="tab" data-tab="index">Index</div>
+    <div class="tab" data-tab="club">Club</div>
+    <div class="tab" data-tab="settings">Settings</div>
+  </div>
+
+  <!-- NEW SESSION -->
+  <div id="tab-new">
+    <div class="card">
+      <div class="row row-2">
+        <div>
+          <label>Date</label>
+          <input type="date" id="date">
+        </div>
+        <div>
+          <label>Bodyweight (kg)</label>
+          <div style="display:grid;grid-template-columns:1fr 82px;gap:6px"><input type="number" id="bwKg" step="0.01" min="0" inputmode="decimal" placeholder="71.67"><select id="bwUnit"><option value="kg">KG</option><option value="lb">LB</option></select></div>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Gender (Sinclair)</label>
+          <select id="gender">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="section-title">Snatch — 3 Attempts</div>
+      <div id="snatch-attempts"></div>
+
+      <div class="section-title">Clean & Jerk — 3 Attempts</div>
+      <div id="cj-attempts"></div>
+
+      <div class="row" style="margin-top:12px">
+        <div>
+          <label>Notes</label>
+          <textarea id="notes" rows="2" placeholder="Session notes..."></textarea>
+        </div>
+      </div>
+
+      <div class="section-title">Videos from Photos</div>
+      <label class="file-btn">
+        📷 Choose from Photos
+        <input type="file" id="videoInput" accept="video/*" multiple>
+      </label>
+      <div id="video-preview" class="video-preview"></div>
+      <p style="font-size:0.78rem;color:var(--muted);margin-top:6px">
+        Videos are stored on your phone with this app. For long-term backup also paste a Drive/YouTube link below.
+      </p>
+      <div class="row" style="margin-top:8px">
+        <div>
+          <label>Or paste video links (optional)</label>
+          <textarea id="videoLinks" rows="2" placeholder="https://..."></textarea>
+        </div>
+      </div>
+
+      <div class="result-box" id="live-results">
+        <div class="result-item"><span>Best Snatch</span><strong id="bestS">—</strong></div>
+        <div class="result-item"><span>Best C&J</span><strong id="bestC">—</strong></div>
+        <div class="result-item"><span>Total kg</span><strong id="totalKg">—</strong></div>
+        <div class="result-item"><span>Total lb</span><strong id="totalLb">—</strong></div>
+        <div class="result-item"><span>Sinclair</span><strong id="sinclair">—</strong></div>
+        <div class="result-item"><span>Level</span><strong id="level">—</strong></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" style="flex:1" onclick="saveSession()">Save Session</button>
+        <button class="btn btn-secondary" onclick="clearForm()">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="tab-history" class="hidden">
+    <div class="actions" style="margin-bottom:12px;margin-top:0">
+      <button class="btn btn-secondary btn-sm" onclick="exportData()">Export</button>
+      <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFile').click()">Import</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+    <div class="card" id="history-filters-card">
+      <div class="section-title" style="margin-top:0">Sort & Filter</div>
+      <div class="row row-2"><div><label>Sort</label><select id="history-sort"><option value="dateDesc">Date (Newest)</option><option value="dateAsc">Date (Oldest)</option><option value="sinDesc">Sinclair (High → Low)</option><option value="sinAsc">Sinclair (Low → High)</option><option value="totalDesc">Total (High → Low)</option><option value="totalAsc">Total (Low → High)</option><option value="bwDesc">Bodyweight (High → Low)</option><option value="bwAsc">Bodyweight (Low → High)</option><option value="snatchDesc">Snatch (High → Low)</option><option value="cjDesc">C&J (High → Low)</option></select></div><div><label>Athlete</label><select id="history-athlete"><option value="all">All athletes</option></select></div></div>
+      <div class="row row-2"><div><label>From</label><input type="date" id="filter-from"></div><div><label>To</label><input type="date" id="filter-to"></div></div>
+      <div class="row row-2"><div><label>Min bodyweight (kg)</label><input type="number" step="0.01" id="filter-min-bw"></div><div><label>Max bodyweight (kg)</label><input type="number" step="0.01" id="filter-max-bw"></div></div>
+      <div class="row row-2"><div><label>Visibility</label><select id="filter-visibility"><option value="all">All</option><option value="private">Private</option><option value="submitted">Club submitted</option></select></div><div><label>Condition</label><select id="filter-condition"><option value="all">All sessions</option><option value="snatchSuccess">Snatch success</option><option value="cjSuccess">C&J success</option><option value="bothSuccess">Both successful</option></select></div></div>
+      <button class="btn btn-secondary btn-sm" id="clear-history-filters">Clear Filters</button>
+    </div>
+    <div id="history-list"></div>
+    <div id="history-empty" class="empty hidden">No sessions yet</div>
+  </div>
+
+  <!-- INDEX -->
+  <div id="tab-index" class="hidden">
+    <div class="card">
+      <div class="section-title" style="margin-top:0">Sinclair Index 2026</div>
+      <table>
+        <tr><td style="width:90px"><strong>150–180</strong></td><td>Beginner / recreational</td></tr>
+        <tr><td><strong>180–220</strong></td><td>Novice competitor</td></tr>
+        <tr><td><strong>220–260</strong></td><td>Competitive amateur</td></tr>
+        <tr><td><strong>260–300</strong></td><td>National-level amateur</td></tr>
+        <tr><td><strong>300+</strong></td><td>Elite level competitor</td></tr>
+      </table>
+      <p style="margin-top:14px;color:var(--muted);font-size:0.85rem">
+        Using your formula:<br>
+        Total × IF(BW &lt; 175.508, 10^(0.751945 × LOG10(BW/175.508)²), 1)
+      </p>
+    </div>
+  </div>
+
+<script>
+const KG_TO_LB = 2.2046226218;
+const SINCLAIR = {
+  male:   { A: 0.751945, b: 175.508 },
+  female: { A: 0.783497476, b: 153.655 }
+};
+
+let pendingVideos = []; // {id, file, url}
+
+function calcSinclair(totalKg, bwKg, gender) {
+  if (!totalKg || !bwKg || bwKg <= 0) return 0;
+  const { A, b } = SINCLAIR[gender] || SINCLAIR.male;
+  if (bwKg >= b) return totalKg;
+  return totalKg * Math.pow(10, A * Math.pow(Math.log10(bwKg / b), 2));
+}
+
+function getLevel(s) {
+  if (s >= 300) return { text: 'Elite', cls: 'badge-elite' };
+  if (s >= 260) return { text: 'National', cls: 'badge-national' };
+  if (s >= 220) return { text: 'Amateur', cls: 'badge-amateur' };
+  if (s >= 180) return { text: 'Novice', cls: 'badge-novice' };
+  if (s >= 150) return { text: 'Beginner', cls: 'badge-beginner' };
+  return { text: '—', cls: '' };
+}
+
+function bestSuccessful(weights, results) {
+  let best = 0;
+  for (let i = 0; i < 3; i++) {
+    const w = parseFloat(weights[i]) || 0;
+    if (results[i] === 'success' && w > best) best = w;
+  }
+  return best;
+}
+
+function buildAttemptUI(containerId, prefix) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const div = document.createElement('div');
+    div.className = 'attempt-block';
+    div.innerHTML = `
+      <div class="attempt-header">
+        <span>${i+1}${i===0?'st':i===1?'nd':'rd'} Attempt</span>
+      </div>
+      <div class="attempt-fields">
+        <div>
+          <label>Weight (kg)</label>
+          <div style="display:grid;grid-template-columns:1fr 70px;gap:6px"><input type="number" class="${prefix}-weight" data-i="${i}" step="0.01" min="0" inputmode="decimal"><select class="${prefix}-unit" data-i="${i}"><option value="kg">KG</option><option value="lb">LB</option></select></div>
+        </div>
+        <div>
+          <label>Result</label>
+          <select class="${prefix}-result" data-i="${i}">
+            <option value="">—</option>
+            <option value="success">Success</option>
+            <option value="fail">Fail</option>
+          </select>
+        </div>
+        <div class="note-field">
+          <label>Fail note</label>
+          <input type="text" class="${prefix}-note" data-i="${i}" placeholder="missed lockout, forward…">
+        </div>
+      </div>
+    `;
+    container.appendChild(div);
+  }
+}
+
+function updateLive() {
+  const sW = [...document.querySelectorAll('.s-weight')].map(el => el.value);
+  const sR = [...document.querySelectorAll('.s-result')].map(el => el.value);
+  const cW = [...document.querySelectorAll('.c-weight')].map(el => el.value);
+  const cR = [...document.querySelectorAll('.c-result')].map(el => el.value);
+
+  const bestS = bestSuccessful(sW, sR);
+  const bestC = bestSuccessful(cW, cR);
+  const total = bestS + bestC;
+  const bw = parseFloat(document.getElementById('bwKg').value) || 0;
+  const gender = document.getElementById('gender').value;
+  const sin = calcSinclair(total, bw, gender);
+  const level = getLevel(sin);
+
+  document.getElementById('bestS').textContent = bestS ? bestS + ' kg' : '—';
+  document.getElementById('bestC').textContent = bestC ? bestC + ' kg' : '—';
+  document.getElementById('totalKg').textContent = total ? total.toFixed(1) : '—';
+  document.getElementById('totalLb').textContent = total ? (total * KG_TO_LB).toFixed(0) : '—';
+  document.getElementById('sinclair').textContent = sin ? sin.toFixed(1) : '—';
+  document.getElementById('level').innerHTML = level.text !== '—' 
+    ? `<span class="badge ${level.cls}">${level.text}</span>` : '—';
+}
+
+// IndexedDB for videos
+const DB_NAME = 'LiftLogDB';
+const DB_VERSION = 2;
+let db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const database = e.target.result;
+      if (!database.objectStoreNames.contains('videos')) {
+        database.createObjectStore('videos', { keyPath: 'id' });
+      }
+      if (!database.objectStoreNames.contains('sessions')) {
+        database.createObjectStore('sessions', { keyPath: 'id' });
+      }
+      if (!database.objectStoreNames.contains('athletes')) {
+        database.createObjectStore('athletes', { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = () => { db = req.result; resolve(db); };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function idbPut(store, value) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).put(value);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function idbGetAll(store) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function idbDelete(store, id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    tx.objectStore(store).delete(id);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function idbGet(store, id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).get(id);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// Video picker
+document.getElementById('videoInput').addEventListener('change', (e) => {
+  const files = [...e.target.files];
+  files.forEach(file => {
+    const id = 'vid_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+    const url = URL.createObjectURL(file);
+    pendingVideos.push({ id, file, url, name: file.name });
+  });
+  renderVideoPreview();
+  e.target.value = '';
+});
+
+function renderVideoPreview() {
+  const box = document.getElementById('video-preview');
+  box.innerHTML = '';
+  pendingVideos.forEach((v, idx) => {
+    const div = document.createElement('div');
+    div.className = 'video-thumb';
+    div.innerHTML = `
+      <video src="${v.url}" muted playsinline></video>
+      <button class="remove-vid" onclick="removePendingVideo(${idx})">×</button>
+    `;
+    box.appendChild(div);
+  });
+}
+
+function removePendingVideo(idx) {
+  URL.revokeObjectURL(pendingVideos[idx].url);
+  pendingVideos.splice(idx, 1);
+  renderVideoPreview();
+}
+
+function clearForm() {
+  document.getElementById('date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('bwKg').value = '';
+  document.getElementById('notes').value = '';
+  document.getElementById('videoLinks').value = '';
+  document.querySelectorAll('.s-weight, .c-weight, .s-note, .c-note').forEach(el => el.value = '');
+  document.querySelectorAll('.s-result, .c-result').forEach(el => el.value = '');
+  pendingVideos.forEach(v => URL.revokeObjectURL(v.url));
+  pendingVideos = [];
+  renderVideoPreview();
+  updateLive();
+}
+
+async function saveSession() {
+  const date = document.getElementById('date').value;
+  const bwKg = parseFloat(document.getElementById('bwKg').value);
+  if (!date || !bwKg) {
+    alert('Date and bodyweight required');
+    return;
+  }
+
+  const sWeights = [...document.querySelectorAll('.s-weight')].map(el => parseFloat(el.value) || 0);
+  const sResults = [...document.querySelectorAll('.s-result')].map(el => el.value);
+  const sNotes = [...document.querySelectorAll('.s-note')].map(el => el.value.trim());
+  const cWeights = [...document.querySelectorAll('.c-weight')].map(el => parseFloat(el.value) || 0);
+  const cResults = [...document.querySelectorAll('.c-result')].map(el => el.value);
+  const cNotes = [...document.querySelectorAll('.c-note')].map(el => el.value.trim());
+
+  const bestS = bestSuccessful(sWeights, sResults);
+  const bestC = bestSuccessful(cWeights, cResults);
+  const totalKg = bestS + bestC;
+  const gender = document.getElementById('gender').value;
+  const sinclair = calcSinclair(totalKg, bwKg, gender);
+
+  // Save video blobs to IndexedDB
+  const videoIds = [];
+  for (const v of pendingVideos) {
+    await idbPut('videos', {
+      id: v.id,
+      name: v.name,
+      type: v.file.type,
+      blob: v.file,
+      created: Date.now()
+    });
+    videoIds.push(v.id);
+  }
+
+  const linksRaw = document.getElementById('videoLinks').value.trim();
+  const links = linksRaw ? linksRaw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean) : [];
+
+  const session = {
+    id: Date.now(),
+    date,
+    bwKg,
+    bwLb: +(bwKg * KG_TO_LB).toFixed(1),
+    gender,
+    snatch: {
+      attempts: sWeights.map((w, i) => ({ weight: w, result: sResults[i] || null, note: sNotes[i] || '' })),
+      best: bestS
+    },
+    cj: {
+      attempts: cWeights.map((w, i) => ({ weight: w, result: cResults[i] || null, note: cNotes[i] || '' })),
+      best: bestC
+    },
+    totalKg: +totalKg.toFixed(2),
+    totalLb: +(totalKg * KG_TO_LB).toFixed(1),
+    sinclair: +sinclair.toFixed(2),
+    notes: document.getElementById('notes').value.trim(),
+    videoIds,
+    videoLinks: links
+  };
+
+  await idbPut('sessions', session);
+  clearForm();
+  await renderHistory();
+  alert('Session saved!');
+  document.querySelector('[data-tab="history"]').click();
+}
+
+async function deleteSession(id) {
+  if (!confirm('Delete this session and its videos?')) return;
+  const session = await idbGet('sessions', id);
+  if (session && session.videoIds) {
+    for (const vid of session.videoIds) {
+      await idbDelete('videos', vid);
+    }
+  }
+  await idbDelete('sessions', id);
+  await renderHistory();
+}
+
+async function renderHistory() {
+  const list = (await idbGetAll('sessions')).sort((a, b) => b.id - a.id);
+  const container = document.getElementById('history-list');
+  const empty = document.getElementById('history-empty');
+  container.innerHTML = '';
+
+  if (!list.length) {
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  for (const s of list) {
+    const level = getLevel(s.sinclair);
+    const snatchAttempts = s.snatch.attempts
+      .filter(a => a.weight)
+      .map(a => {
+        const cls = a.result === 'success' ? 'success' : (a.result === 'fail' ? 'fail' : '');
+        return `<span class="${cls}">${a.weight}${a.result==='fail'&&a.note?' ('+a.note+')':''}</span>`;
+      }).join(' · ') || '—';
+
+    const cjAttempts = s.cj.attempts
+      .filter(a => a.weight)
+      .map(a => {
+        const cls = a.result === 'success' ? 'success' : (a.result === 'fail' ? 'fail' : '');
+        return `<span class="${cls}">${a.weight}${a.result==='fail'&&a.note?' ('+a.note+')':''}</span>`;
+      }).join(' · ') || '—';
+
+    // Load video blobs for playback
+    let videoHtml = '';
+    if (s.videoIds && s.videoIds.length) {
+      videoHtml += '<div class="video-preview" style="margin-top:8px">';
+      for (const vidId of s.videoIds) {
+        const vid = await idbGet('videos', vidId);
+        if (vid && vid.blob) {
+          const url = URL.createObjectURL(vid.blob);
+          videoHtml += `<div class="video-thumb"><video src="${url}" controls playsinline style="width:100%;height:100%;object-fit:cover"></video></div>`;
+        }
+      }
+      videoHtml += '</div>';
+    }
+    if (s.videoLinks && s.videoLinks.length) {
+      videoHtml += '<div style="margin-top:6px">' + s.videoLinks.map((l,i) => 
+        `<a href="${l}" target="_blank" rel="noopener" style="color:var(--accent2);margin-right:8px">Link ${i+1}</a>`
+      ).join('') + '</div>';
+    }
+
+    const card = document.createElement('div');
+    card.className = 'history-card';
+    card.innerHTML = `
+      <div class="top">
+        <div>
+          <div class="date">${s.date}</div>
+          <div class="history-meta">${s.bwKg} kg (${s.bwLb} lb) · ${s.gender}</div>
+        </div>
+        <div>
+          ${level.text !== '—' ? `<span class="badge ${level.cls}">${level.text}</span>` : ''}
+          <button class="btn btn-danger btn-sm" style="margin-left:6px" onclick="deleteSession(${s.id})">Del</button>
+        </div>
+      </div>
+      <div class="lifts-row">
+        <div><span>Snatch</span><strong>${s.snatch.best || '—'} kg</strong></div>
+        <div><span>C&J</span><strong>${s.cj.best || '—'} kg</strong></div>
+        <div><span>Total</span><strong>${s.totalKg || '—'} kg</strong></div>
+      </div>
+      <div style="font-size:0.85rem;margin:4px 0">
+        Sinclair: <strong>${s.sinclair || '—'}</strong>
+        ${s.notes ? '<br>' + s.notes : ''}
+      </div>
+      <details>
+        <summary>Attempts & Videos</summary>
+        <div style="font-size:0.82rem;margin-top:6px">
+          <div>S: ${snatchAttempts}</div>
+          <div>C&J: ${cjAttempts}</div>
+          ${videoHtml}
+        </div>
+      </details>
+    `;
+    container.appendChild(card);
+  }
+}
+
+async function exportData() {
+  const sessions = await idbGetAll('sessions');
+  // Note: blobs are not included in export for size reasons. Links are.
+  const exportable = sessions.map(s => {
+    const copy = {...s};
+    delete copy.videoIds; // blobs stay on device
+    return copy;
+  });
+  const blob = new Blob([JSON.stringify(exportable, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `lift-log-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      const imported = JSON.parse(reader.result);
+      if (!Array.isArray(imported)) throw new Error('Invalid');
+      for (const s of imported) {
+        if (!s.videoIds) s.videoIds = [];
+        await idbPut('sessions', s);
+      }
+      await renderHistory();
+      alert('Imported');
+    } catch (err) {
+      alert('Import failed');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', async () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-new').classList.toggle('hidden', tab.dataset.tab !== 'new');
+    document.getElementById('tab-history').classList.toggle('hidden', tab.dataset.tab !== 'history');
+    document.getElementById('tab-index').classList.toggle('hidden', tab.dataset.tab !== 'index');
+    if (tab.dataset.tab === 'history') await renderHistory();
+  });
+});
+
+// Show install tip on iOS Safari
+function isIos() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+function isInStandalone() {
+  return window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+}
+if (isIos() && !isInStandalone()) {
+  document.getElementById('install-banner').classList.remove('hidden');
+}
+
+// Init
+(async () => {
+  await openDB();
+  buildAttemptUI('snatch-attempts', 's');
+  buildAttemptUI('cj-attempts', 'c');
+  document.getElementById('date').value = new Date().toISOString().slice(0,10);
+  document.querySelectorAll('#tab-new input, #tab-new select').forEach(el => {
+    el.addEventListener('input', updateLive);
+    el.addEventListener('change', updateLive);
+  });
+  // re-bind after dynamic build
+  setTimeout(() => {
+    document.querySelectorAll('.s-weight, .s-result, .c-weight, .c-result').forEach(el => {
+      el.addEventListener('input', updateLive);
+      el.addEventListener('change', updateLive);
+    });
+  }, 50);
+  updateLive();
+})();
+</script>
+
+  <div id="tab-club" class="hidden">
+    <div class="card" style="text-align:center">
+      <img src="hlowc-logo.png" style="width:96px;height:96px;border-radius:20px;object-fit:cover" alt="HLOWC">
+      <h2 style="margin:8px 0 2px">HLOWC Club View</h2>
+      <p style="color:var(--muted);font-size:.85rem">Submitted tests from profiles on this device.</p>
+      <p style="color:var(--muted);font-size:.78rem">GitHub Pages is static hosting, so true cross-phone club sync needs a small backend. This screen is the club-ready local view; member data is not written into GitHub.</p>
+    </div><div id="club-list"></div>
+  </div>
+  <div id="tab-settings" class="hidden">
+    <div class="card" style="text-align:center"><img src="hlowc-logo.png" style="width:96px;height:96px;border-radius:20px;object-fit:cover" alt="HLOWC"><h2 style="margin:8px 0 2px">HLOWC</h2><p style="color:var(--muted);font-size:.85rem">Harvey's Lake Olympic Weightlifting Club</p></div>
+    <div class="card"><div class="section-title" style="margin-top:0">Athletes on this device</div><div class="row row-2"><input id="new-athlete" placeholder="Member name"><button class="btn btn-primary" id="add-athlete">Add Athlete</button></div><div id="athlete-list"></div><p style="color:var(--muted);font-size:.78rem;margin-top:8px">Profiles are independent on this device. Your friend's phone will have its own data.</p></div>
+    <div class="card"><div class="section-title" style="margin-top:0">Data safety</div><p style="color:var(--muted);font-size:.78rem">This update keeps the existing LiftLogDB database and session/video stores, so updating the app files does not intentionally delete saved sessions or videos.</p></div>
+  </div>
+
+<script>
+// HLOWC tab controller for Club + Settings
+for(const tab of document.querySelectorAll('.tab')){tab.addEventListener('click',async()=>{if(['club','settings'].includes(tab.dataset.tab)){for(const id of ['new','history','index','club','settings']){const el=document.getElementById('tab-'+id);if(el)el.classList.toggle('hidden',id!==tab.dataset.tab)}if(tab.dataset.tab==='club')await renderClub();if(tab.dataset.tab==='settings')await renderAthletes();}})}
+</script>
+<script>
+
+// ===== HLOWC v2 enhancements =====
+const HLOWC_DB_VERSION = 2;
+let hlowcActiveAthlete = localStorage.getItem('hlowcActiveAthlete') || 'default';
+let hlowcPrivacy = 'private';
+function hlowcKg(v,u){ const n=parseFloat(v)||0; return +(u==='lb' ? n/KG_TO_LB : n).toFixed(2); }
+function hlowcEsc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function hlowcStoreGetAll(store){return await idbGetAll(store);}
+async function hlowcStorePut(store,v){return await idbPut(store,v);}
+async function hlowcStoreGet(store,id){return await idbGet(store,id);}
+async function hlowcStoreDelete(store,id){return await idbDelete(store,id);}
+async function hlowcEnsureAthletes(){
+  // Add an athlete store if the current DB was upgraded from v1.
+  if(!db.objectStoreNames.contains('athletes')) return [];
+  let a=await hlowcStoreGetAll('athletes');
+  if(!a.length){const x={id:'ath_'+Date.now(),name:'My Profile',gender:'male'};await hlowcStorePut('athletes',x);a=[x];}
+  if(!a.some(x=>x.id===hlowcActiveAthlete)) hlowcActiveAthlete=a[0].id;
+  localStorage.setItem('hlowcActiveAthlete',hlowcActiveAthlete);
+  return a;
+}
+async function renderAthletes(){
+  const a=await hlowcEnsureAthletes();
+  const sel=document.getElementById('athlete'); if(sel) sel.innerHTML=a.map(x=>`<option value="${x.id}" ${x.id===hlowcActiveAthlete?'selected':''}>${hlowcEsc(x.name)}</option>`).join('');
+  const hs=document.getElementById('history-athlete'); if(hs) hs.innerHTML='<option value="all">All athletes</option>'+a.map(x=>`<option value="${x.id}">${hlowcEsc(x.name)}</option>`).join('');
+  const list=document.getElementById('athlete-list'); if(list) list.innerHTML=a.map(x=>`<div class="history-card"><strong>${hlowcEsc(x.name)}</strong><div style="color:var(--muted);font-size:.78rem">${x.id===hlowcActiveAthlete?'Active profile':'Local profile'}</div><button class="btn btn-secondary btn-sm" style="margin-top:7px" onclick="hlowcSetAthlete('${x.id}')">Use</button></div>`).join('');
+}
+async function hlowcSetAthlete(id){hlowcActiveAthlete=id;localStorage.setItem('hlowcActiveAthlete',id);await renderAthletes();document.getElementById('athlete').value=id;}
+async function hlowcAddAthlete(){const n=document.getElementById('new-athlete').value.trim();if(!n)return;const a=await hlowcStoreGetAll('athletes');const x={id:'ath_'+Date.now(),name:n,gender:'male'};await hlowcStorePut('athletes',x);hlowcActiveAthlete=x.id;localStorage.setItem('hlowcActiveAthlete',x.id);document.getElementById('new-athlete').value='';await renderAthletes();}
+function hlowcSetPrivacy(p){hlowcPrivacy=p;const a=document.getElementById('private-session');const b=document.getElementById('submit-session');if(a)a.classList.toggle('btn-primary',p==='private');if(b)b.classList.toggle('btn-primary',p==='submitted');}
+// Add privacy controls next to the notes section.
+(function addPrivacyUI(){
+ const notes=document.getElementById('notes'); if(!notes)return; const wrap=notes.parentElement; const box=document.createElement('div');box.innerHTML='<div class="section-title">Session Privacy</div><div class="actions"><button class="btn btn-primary" id="private-session">🔒 Private</button><button class="btn btn-secondary" id="submit-session">👥 Submit to Club</button></div><p style="font-size:.78rem;color:var(--muted)">Private stays on your device. Submitted is marked for the club view. Cross-phone sharing requires a backend connection.</p>';wrap.parentElement.insertBefore(box,wrap.nextSibling);document.getElementById('private-session').onclick=()=>hlowcSetPrivacy('private');document.getElementById('submit-session').onclick=()=>hlowcSetPrivacy('submitted');
+})();
+// Add unit selectors to dynamically-created attempt blocks if not already present.
+(function addAttemptUnits(){
+ ['s','c'].forEach(prefix=>document.querySelectorAll('.'+prefix+'-weight').forEach(inp=>{if(inp.parentElement.querySelector('.'+prefix+'-unit'))return;const sel=document.createElement('select');sel.className=prefix+'-unit';sel.innerHTML='<option value="kg">KG</option><option value="lb">LB</option>';inp.parentElement.insertBefore(sel,inp.nextSibling);inp.parentElement.style.display='grid';inp.parentElement.style.gridTemplateColumns='1fr 70px';inp.parentElement.style.gap='6px';}));
+})();
+// Override save so all weights are stored canonically in kg while accepting kg or lb input.
+const hlowcOriginalSaveSession=window.saveSession;
+window.saveSession=async function(){
+ const date=document.getElementById('date').value,bw=hlowcKg(document.getElementById('bwKg').value,document.getElementById('bwUnit')?.value||'kg');if(!date||!bw){alert('Date and bodyweight required');return;}
+ const read=(p)=>[0,1,2].map(i=>{const w=document.querySelector(`.${p}-weight[data-i="${i}"]`),r=document.querySelector(`.${p}-result[data-i="${i}"]`),n=document.querySelector(`.${p}-note[data-i="${i}"]`),u=document.querySelector(`.${p}-unit[data-i="${i}"]`);return{weight:hlowcKg(w?.value,u?.value||'kg'),result:r?.value||null,note:n?.value?.trim()||''};});
+ const sa=read('s'),ca=read('c'),bs=bestSuccessful(sa.map(x=>x.weight),sa.map(x=>x.result)),bc=bestSuccessful(ca.map(x=>x.weight),ca.map(x=>x.result)),total=+(bs+bc).toFixed(2),gender=document.getElementById('gender').value,si=calcSinclair(total,bw,gender),videoIds=[];
+ for(const v of pendingVideos){await idbPut('videos',{id:v.id,name:v.name,type:v.file.type,blob:v.file,created:Date.now()});videoIds.push(v.id)}
+ const session={id:Date.now(),date,bwKg:bw,bwLb:+(bw*KG_TO_LB).toFixed(1),gender,athleteId:hlowcActiveAthlete,weightClass:'',snatch:{attempts:sa,best:bs},cj:{attempts:ca,best:bc},totalKg:total,totalLb:+(total*KG_TO_LB).toFixed(1),sinclair:+si.toFixed(2),notes:document.getElementById('notes').value.trim(),videoIds,videoLinks:[],visibility:hlowcPrivacy};
+ await idbPut('sessions',session);document.getElementById('notes').value='';pendingVideos.forEach(v=>URL.revokeObjectURL(v.url));pendingVideos=[];renderVideoPreview();alert('HLOWC session saved!');await renderHistory();
+};
+async function renderHistory(){
+ const all=await hlowcStoreGetAll('sessions'),ath=await hlowcEnsureAthletes(),names=Object.fromEntries(ath.map(x=>[x.id,x.name]));let arr=all.map(s=>({...s,athleteName:names[s.athleteId]||'My Profile'}));
+ const ha=document.getElementById('history-athlete')?.value||'all',from=document.getElementById('filter-from')?.value||'',to=document.getElementById('filter-to')?.value||'',min=parseFloat(document.getElementById('filter-min-bw')?.value),max=parseFloat(document.getElementById('filter-max-bw')?.value),vis=document.getElementById('filter-visibility')?.value||'all',cond=document.getElementById('filter-condition')?.value||'all';
+ arr=arr.filter(s=>(ha==='all'||s.athleteId===ha)&&(!from||s.date>=from)&&(!to||s.date<=to)&&(isNaN(min)||s.bwKg>=min)&&(isNaN(max)||s.bwKg<=max)&&(vis==='all'||(s.visibility||'private')===vis));
+ arr=arr.filter(s=>{const ss=(s.snatch?.attempts||[]).some(a=>a.result==='success'),cc=(s.cj?.attempts||[]).some(a=>a.result==='success');return cond==='all'||(cond==='snatchSuccess'&&ss)||(cond==='cjSuccess'&&cc)||(cond==='bothSuccess'&&ss&&cc)});
+ const sort=document.getElementById('history-sort')?.value||'dateDesc';const cmp={dateDesc:(a,b)=>b.date.localeCompare(a.date),dateAsc:(a,b)=>a.date.localeCompare(b.date),sinDesc:(a,b)=>b.sinclair-a.sinclair,sinAsc:(a,b)=>a.sinclair-b.sinclair,totalDesc:(a,b)=>b.totalKg-a.totalKg,totalAsc:(a,b)=>a.totalKg-b.totalKg,bwDesc:(a,b)=>b.bwKg-a.bwKg,bwAsc:(a,b)=>a.bwKg-b.bwKg,snatchDesc:(a,b)=>(b.snatch?.best||0)-(a.snatch?.best||0),cjDesc:(a,b)=>(b.cj?.best||0)-(a.cj?.best||0)};arr.sort(cmp[sort]);
+ const box=document.getElementById('history-list'),empty=document.getElementById('history-empty');box.innerHTML='';empty.classList.toggle('hidden',arr.length>0);
+ for(const s of arr){const card=document.createElement('div');card.className='history-card';card.innerHTML=`<div class="history-card"><div class="top"><div><div class="date">${hlowcEsc(s.date)}</div><div class="history-meta">${hlowcEsc(s.athleteName)} · BW ${Number(s.bwKg).toFixed(2)} kg</div></div><div><span class="badge ${s.visibility==='submitted'?'badge-elite':'badge-novice'}">${s.visibility==='submitted'?'Club submitted':'Private'}</span></div></div><div class="lifts-row"><div><span>Snatch</span><strong>${s.snatch?.best||'—'} kg</strong></div><div><span>C&J</span><strong>${s.cj?.best||'—'} kg</strong></div><div><span>Total</span><strong>${s.totalKg||'—'} kg</strong></div></div><div style="font-size:.85rem">Sinclair: <strong>${s.sinclair||'—'}</strong>${s.notes?'<br>'+hlowcEsc(s.notes):''}</div><details><summary>Attempts & Videos</summary><div style="font-size:.82rem;margin-top:6px">${(s.snatch?.attempts||[]).filter(a=>a.weight).map(a=>a.weight+' kg '+(a.result||'')).join(' · ')||'—'}<br>${(s.cj?.attempts||[]).filter(a=>a.weight).map(a=>a.weight+' kg '+(a.result||'')).join(' · ')||'—'}</div></details><button class="btn btn-danger btn-sm" style="margin-top:8px" onclick="deleteSession(${s.id})">Del</button></div>`;box.appendChild(card)}
+}
+async function renderClub(){const all=await hlowcStoreGetAll('sessions'),ath=await hlowcEnsureAthletes(),names=Object.fromEntries(ath.map(x=>[x.id,x.name]));const s=all.filter(x=>x.visibility==='submitted').sort((a,b)=>b.sinclair-a.sinclair);const box=document.getElementById('club-list');box.innerHTML=s.length?s.map(x=>`<div class="history-card"><strong>${hlowcEsc(names[x.athleteId]||'Member')}</strong><div class="history-meta">${x.date} · BW ${Number(x.bwKg).toFixed(2)} kg</div><div class="lifts-row"><div><span>Snatch</span><strong>${x.snatch.best} kg</strong></div><div><span>C&J</span><strong>${x.cj.best} kg</strong></div><div><span>Sinclair</span><strong>${x.sinclair}</strong></div></div></div>`).join(''):'<div class="empty">No club-submitted tests on this device.</div>'}
+// Filters
+['history-sort','history-athlete','filter-from','filter-to','filter-min-bw','filter-max-bw','filter-visibility','filter-condition'].forEach(id=>{const e=document.getElementById(id);if(e)e.addEventListener('change',renderHistory);if(e)e.addEventListener('input',renderHistory)});document.getElementById('clear-history-filters')?.addEventListener('click',()=>{['filter-from','filter-to','filter-min-bw','filter-max-bw'].forEach(id=>document.getElementById(id).value='');document.getElementById('history-athlete').value='all';document.getElementById('filter-visibility').value='all';document.getElementById('filter-condition').value='all';document.getElementById('history-sort').value='dateDesc';renderHistory()});
+document.getElementById('athlete')?.addEventListener('change',e=>{hlowcActiveAthlete=e.target.value;localStorage.setItem('hlowcActiveAthlete',hlowcActiveAthlete)});document.getElementById('add-athlete')?.addEventListener('click',hlowcAddAthlete);
+
+function hlowcUpdateLive(){
+ const s=getAttempts('s').filter(x=>x.result==='success').reduce((m,x)=>Math.max(m,x.weight),0);
+ const c=getAttempts('c').filter(x=>x.result==='success').reduce((m,x)=>Math.max(m,x.weight),0);
+ const total=+(s+c).toFixed(2); const bw=hlowcKg(document.getElementById('bwKg').value,document.getElementById('bwUnit')?.value||'kg'); const gender=document.getElementById('gender').value; const si=calcSinclair(total,bw,gender); const lev=getLevel(si);
+ document.getElementById('bestS').textContent=s?s+' kg':'—';document.getElementById('bestC').textContent=c?c+' kg':'—';document.getElementById('totalKg').textContent=total?total.toFixed(2):'—';document.getElementById('totalLb').textContent=total?(total*KG_TO_LB).toFixed(1):'—';document.getElementById('sinclair').textContent=si?si.toFixed(1):'—';document.getElementById('level').textContent=lev.text;
+}
+document.getElementById('bwKg')?.addEventListener('input',hlowcUpdateLive);document.getElementById('bwUnit')?.addEventListener('change',hlowcUpdateLive);document.getElementById('gender')?.addEventListener('change',hlowcUpdateLive);document.addEventListener('input',e=>{if(e.target.matches('.s-weight,.c-weight,.s-result,.c-result,.s-unit,.c-unit'))hlowcUpdateLive()});document.addEventListener('change',e=>{if(e.target.matches('.s-weight,.c-weight,.s-result,.c-result,.s-unit,.c-unit'))hlowcUpdateLive()});
+setTimeout(async()=>{try{await hlowcEnsureAthletes();await renderAthletes();hlowcUpdateLive();}catch(e){console.error(e)}},300);
+
+</script>
+<script>if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));</script></body>
+</html>
